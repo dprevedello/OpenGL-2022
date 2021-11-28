@@ -9,6 +9,13 @@ def disegna():
     glClearColor(0, 0, 0, 1)
     glClear(GL_COLOR_BUFFER_BIT)
 
+    glPushMatrix()
+
+    glRotatef(10, 0, 0, 1)
+    glScalef(0.7, 0.5, 1)
+    glTranslatef(0, 0, -1.0)
+    glTranslatef(0, 0.5, 0)
+
     glBegin(GL_TRIANGLES)
     glColor3f(1, 0, 0)
     glVertex3f(-1, -1, 0)
@@ -17,6 +24,8 @@ def disegna():
     glColor3f(0, 0, 1)
     glVertex3f(1, -1, 0)
     glEnd()
+
+    glPopMatrix()
 
     pygame.display.flip()
 
