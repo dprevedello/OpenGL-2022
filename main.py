@@ -32,10 +32,12 @@ def disegna():
 
 def main():
     pygame.init()
-    window_size = (500, 500)
+    window_size = width, height = 500, 500
     window = pygame.display.set_mode(window_size, DOUBLEBUF | OPENGL)
     pygame.display.set_caption("3D Lab - ISIS Ponti")
     pygame.display.set_icon(pygame.image.load('icon.png'))
+
+    gluPerspective(45, width / height, 0.1, 50.0)
 
     running = True
     while running:
