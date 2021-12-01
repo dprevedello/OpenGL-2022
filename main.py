@@ -3,6 +3,8 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+animation_angle = 0
+
 
 def triangolo():
     glBegin(GL_TRIANGLES)
@@ -15,7 +17,7 @@ def triangolo():
     glEnd()
 
 
-def disegna(zoom, rotx, roty):
+def disegna(zoom, rotx, roty, animate):
     glClearColor(0, 0, 0, 1)
     glClear(GL_COLOR_BUFFER_BIT)
 
@@ -24,6 +26,11 @@ def disegna(zoom, rotx, roty):
     glTranslatef(0, 0, -5 + zoom)
     glRotatef(-rotx, 1, 0, 0)
     glRotatef(-roty, 0, 1, 0)
+
+    global animation_angle
+    glRotatef(animation_angle, 0, 1, 0)
+    if animate:
+        animation_angle += 0.02
 
     glPushMatrix()
     triangolo()
@@ -45,6 +52,7 @@ def main():
     zoom = 0
     old_x, old_y, rotx, roty = 0, 0, 0, 0
     dragging = False
+    animate = False
     running = True
     while running:
         for event in pygame.event.get():
@@ -76,7 +84,11 @@ def main():
                     rotx = rotx - (event.pos[1] - old_y)
                     roty = roty - (event.pos[0] - old_x)
                     old_x, old_y = event.pos
-        disegna(zoom, rotx, roty)
+
+            # Animazione
+            if event.type == pygame.KEYUP and event.unicode == 'a':
+                animate = not animate
+        disegna(zoom, rotx, roty, animate)
     pygame.quit()
 
 
