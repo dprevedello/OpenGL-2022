@@ -15,19 +15,17 @@ def triangolo():
     glEnd()
 
 
-def disegna(zoom):
+def disegna(zoom, rotx, roty):
     glClearColor(0, 0, 0, 1)
     glClear(GL_COLOR_BUFFER_BIT)
 
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-    glTranslatef(0, 0, zoom)
+    glTranslatef(0, 0, -5 + zoom)
+    glRotatef(-rotx, 1, 0, 0)
+    glRotatef(-roty, 0, 1, 0)
 
     glPushMatrix()
-    glRotatef(10, 0, 0, 1)
-    glScalef(0.7, 0.5, 1)
-    glTranslatef(0, 0, -1.0)
-    glTranslatef(0, 0.5, 0)
     triangolo()
     glPopMatrix()
 
@@ -45,9 +43,12 @@ def main():
     gluPerspective(45, width / height, 0.1, 50.0)
 
     zoom = 0
+    old_x, old_y, rotx, roty = 0, 0, 0, 0
+    dragging = False
     running = True
     while running:
         for event in pygame.event.get():
+            # Uscita dal programma
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE:
@@ -55,13 +56,27 @@ def main():
             if event.type == pygame.KEYUP and event.unicode == 'q':
                 running = False
 
+            # Zoom in
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4 or \
                event.type == pygame.KEYDOWN and event.key == pygame.K_PLUS:
                 zoom += 0.5
+            # Zoom out
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 5 or \
                event.type == pygame.KEYDOWN and event.key == pygame.K_MINUS:
                 zoom -= 0.5
-        disegna(zoom)
+
+            # Rotazioni del modello
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                dragging = True
+                old_x, old_y = event.pos
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                dragging = False
+            if event.type == pygame.MOUSEMOTION:
+                if dragging:
+                    rotx = rotx - (event.pos[1] - old_y)
+                    roty = roty - (event.pos[0] - old_x)
+                    old_x, old_y = event.pos
+        disegna(zoom, rotx, roty)
     pygame.quit()
 
 
