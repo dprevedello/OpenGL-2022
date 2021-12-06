@@ -33,7 +33,7 @@ def disegna(zoom, rotx, roty, animate, canvas2D):
     global animation_angle
     glRotatef(animation_angle, 0, 1, 0)
     if animate:
-        animation_angle += 0.02
+        animation_angle += (360 / 5 / 60)
 
     glPushMatrix()
     triangolo()
@@ -64,6 +64,7 @@ def main():
     animate = False
     fps = 0
     t0 = time.time()
+    clock = pygame.time.Clock()
     running = True
     while running:
         for event in pygame.event.get():
@@ -106,6 +107,9 @@ def main():
             fps = 0
             t0 = time.time()
         disegna(zoom, rotx, roty, animate, canvas2D)
+
+        # Impostiamo il frame rate a 60 FPS
+        clock.tick(60)
     pygame.quit()
 
 
