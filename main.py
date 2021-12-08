@@ -5,6 +5,8 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+import sys
+
 
 class Scena:
 
@@ -26,9 +28,22 @@ class Scena:
         pygame.time.set_timer(self.fps_timer, 500)
         # Clock per regolare il Frame Rate
         self.clock = pygame.time.Clock()
+        # Fullscreen
+        self.fullscreen = False
+        # Scena visibile
+        self.destroyed = False
+
+        self.window_id = GetForegroundWindow()
+        self.decorations = [
+            s1 - s2
+            for s1, s2 in zip(windowSize(self.window_id), (width, height))
+        ]
 
         self._build_2D_interface(width, height)
         self.setup(width, height)
+        self.oldWndProc = SetWindowLong(
+            self.window_id, GWL_WNDPROC, lambda *args: wndProc(
+                self.oldWndProc, self._update_on_resize, *args))
 
     def _build_2D_interface(self, width, height):
         self.fps_text = Gl2D_Text("")
@@ -40,6 +55,16 @@ class Scena:
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         gluPerspective(45, width / height, 0.1, 50.0)
+
+    def _update_on_resize(self, *args):
+        if not self.destroyed:
+            width, height = [
+                s1 - s2
+                for s1, s2 in zip(windowSize(self.window_id), self.decorations)
+            ] if not self.fullscreen else windowSize(self.window_id)
+            self.setup(width, height)
+            self.canvas2D.setSize((width, height))
+            self.draw()
 
     def _pre_draw(self):
         # Aggiornamento FPS
@@ -75,6 +100,9 @@ class Scena:
         # Impostiamo il frame rate
         self.clock.tick(self.frame_rate)
 
+    def destroy(self):
+        self.destroyed = True
+
     def zoom_in(self):
         self.zoom += 0.5
 
@@ -99,6 +127,10 @@ class Scena:
         self.fps_text.setText(f"{sum(self.fps)/4*2:.1f} FPS")
         self.fps = [0, self.fps[0], self.fps[1], self.fps[2]]
 
+    def toggle_fullscreen(self):
+        self.fullscreen = not self.fullscreen
+        pygame.display.toggle_fullscreen()
+
 
 def triangolo():
     glBegin(GL_TRIANGLES)
@@ -114,7 +146,8 @@ def triangolo():
 def main():
     pygame.init()
     window_size = width, height = 500, 500
-    window = pygame.display.set_mode(window_size, DOUBLEBUF | OPENGL)
+    window = pygame.display.set_mode(window_size,
+                                     DOUBLEBUF | OPENGL | RESIZABLE)
     pygame.display.set_caption("3D Lab - ISIS Ponti")
     pygame.display.set_icon(pygame.image.load('icon.png'))
 
@@ -124,11 +157,10 @@ def main():
     while running:
         for event in pygame.event.get():
             # Uscita dal programma
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE:
-                running = False
-            if event.type == pygame.KEYUP and event.unicode == 'q':
+            if event.type == pygame.QUIT or \
+               event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE or \
+               event.type == pygame.KEYUP and event.unicode == 'q':
+                scena.destroy()
                 running = False
 
             # Zoom in
@@ -155,8 +187,18 @@ def main():
             # Contatore FPS
             if event.type == scena.fps_timer:
                 scena.update_FPS()
+
+            # Attivazione full screen
+            if event.type == pygame.KEYUP and event.unicode == 'f':
+                pygame.display.toggle_fullscreen()
+
+            # Resize
+            if event.type == pygame.VIDEORESIZE:
+                window_size = width, height = event.size
+                scena.setup(width, height)
         scena.draw()
     pygame.quit()
+    sys.exit()
 
 
 if __name__ == "__main__":
