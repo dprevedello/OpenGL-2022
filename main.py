@@ -34,6 +34,8 @@ class Scena:
         self.interface_2D = True
         # Scena visibile
         self.destroyed = False
+        # Backface culling
+        self.culling = True
 
         self.window_id = GetForegroundWindow()
         self.decorations = [
@@ -62,10 +64,18 @@ class Scena:
                                            bgColor="#8AB23D",
                                            overBgColor="#A4D21D",
                                            clickColor="#6AA40A")
+        self.culing_button = Gl2D_Text("CULL",
+                                       border=True,
+                                       radius=5,
+                                       bg=True,
+                                       bgColor="#3D97B2",
+                                       overBgColor="#1DB5D2",
+                                       clickColor="#0A80A4")
         self.bottom_bar = FoldableBar(
             {
                 'animate': self.animate_button,
-                'fullscreen': self.fullscreen_button
+                'fullscreen': self.fullscreen_button,
+                'culling': self.culing_button
             },
             position="bottom")
         self.bottom_bar.content['fold'].setText('◄')
@@ -81,6 +91,12 @@ class Scena:
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         gluPerspective(45, width / height, 0.1, 50.0)
+
+        glCullFace(GL_BACK)
+        if self.culling:
+            glEnable(GL_CULL_FACE)
+        else:
+            glDisable(GL_CULL_FACE)
 
     def _update_on_resize(self, *args):
         if not self.destroyed:
@@ -166,6 +182,8 @@ class Scena:
                     self.toggle_animation()
                 elif element == 'fullscreen':
                     self.toggle_fullscreen()
+                elif element == 'culling':
+                    self.toggle_culling()
             if element == 'fold':
                 self.bottom_bar.folded = not self.bottom_bar.folded
                 if self.bottom_bar.folded:
@@ -176,15 +194,22 @@ class Scena:
     def toggle_interface_2D(self):
         self.interface_2D = not self.interface_2D
 
+    def toggle_culling(self):
+        self.culling = not self.culling
+        if self.culling:
+            glEnable(GL_CULL_FACE)
+        else:
+            glDisable(GL_CULL_FACE)
+
 
 def triangolo():
     glBegin(GL_TRIANGLES)
     glColor3f(1, 0, 0)
     glVertex3f(-1, -1, 0)
-    glColor3f(0, 1, 0)
-    glVertex3f(0, 1, 0)
     glColor3f(0, 0, 1)
     glVertex3f(1, -1, 0)
+    glColor3f(0, 1, 0)
+    glVertex3f(0, 1, 0)
     glEnd()
 
 
@@ -249,6 +274,10 @@ def main():
             # Disattivazione / attivazione interfaccia 2D
             if event.type == pygame.KEYUP and event.unicode == 'i':
                 scena.toggle_interface_2D()
+
+            # Backface culling
+            if event.type == pygame.KEYUP and event.unicode == 'c':
+                scena.toggle_culling()
         scena.draw()
     pygame.quit()
     sys.exit()
