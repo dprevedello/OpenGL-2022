@@ -30,6 +30,8 @@ class Scena:
         self.clock = pygame.time.Clock()
         # Fullscreen
         self.fullscreen = False
+        # Interfaccia 2D visibile
+        self.interface_2D = True
         # Scena visibile
         self.destroyed = False
 
@@ -46,9 +48,33 @@ class Scena:
                 self.oldWndProc, self._update_on_resize, *args))
 
     def _build_2D_interface(self, width, height):
+        self.animate_button = Gl2D_Text("ANIM",
+                                        border=True,
+                                        radius=5,
+                                        bg=True,
+                                        bgColor="#B2473D",
+                                        overBgColor="#D22C1D",
+                                        clickColor="#A4160A")
+        self.fullscreen_button = Gl2D_Text("FULL",
+                                           border=True,
+                                           radius=5,
+                                           bg=True,
+                                           bgColor="#8AB23D",
+                                           overBgColor="#A4D21D",
+                                           clickColor="#6AA40A")
+        self.bottom_bar = FoldableBar(
+            {
+                'animate': self.animate_button,
+                'fullscreen': self.fullscreen_button
+            },
+            position="bottom")
+        self.bottom_bar.content['fold'].setText('◄')
+
         self.fps_text = Gl2D_Text("")
         self.top_bar = FoldableBar({'fps': self.fps_text}, foldButton=False)
-        self.canvas2D = Gl2D_Canvas((width, height)).addWidget(self.top_bar)
+
+        self.canvas2D = Gl2D_Canvas((width, height))
+        self.canvas2D.addWidget(self.top_bar, self.bottom_bar)
         self.update_FPS()
 
     def setup(self, width, height):
@@ -92,7 +118,8 @@ class Scena:
         triangolo()
         glPopMatrix()
 
-        self.canvas2D.draw()
+        if self.interface_2D:
+            self.canvas2D.draw()
         self._post_draw()
 
     def _post_draw(self):
@@ -130,6 +157,24 @@ class Scena:
     def toggle_fullscreen(self):
         self.fullscreen = not self.fullscreen
         pygame.display.toggle_fullscreen()
+
+    def on_click_2D(self):
+        if self.interface_2D:
+            element = self.canvas2D.overElement()
+            if not self.bottom_bar.folded:
+                if element == 'animate':
+                    self.toggle_animation()
+                elif element == 'fullscreen':
+                    self.toggle_fullscreen()
+            if element == 'fold':
+                self.bottom_bar.folded = not self.bottom_bar.folded
+                if self.bottom_bar.folded:
+                    self.bottom_bar.content['fold'].setText('►')
+                else:
+                    self.bottom_bar.content['fold'].setText('◄')
+
+    def toggle_interface_2D(self):
+        self.interface_2D = not self.interface_2D
 
 
 def triangolo():
@@ -190,12 +235,20 @@ def main():
 
             # Attivazione full screen
             if event.type == pygame.KEYUP and event.unicode == 'f':
-                pygame.display.toggle_fullscreen()
+                scena.toggle_fullscreen()
 
             # Resize
             if event.type == pygame.VIDEORESIZE:
                 window_size = width, height = event.size
                 scena.setup(width, height)
+
+            # Interazione con l'interfaccia 2D
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                scena.on_click_2D()
+
+            # Disattivazione / attivazione interfaccia 2D
+            if event.type == pygame.KEYUP and event.unicode == 'i':
+                scena.toggle_interface_2D()
         scena.draw()
     pygame.quit()
     sys.exit()
