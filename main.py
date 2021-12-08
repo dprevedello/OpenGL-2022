@@ -6,6 +6,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 
 import sys
+import numpy
 
 
 class Scena:
@@ -49,6 +50,8 @@ class Scena:
             self.window_id, GWL_WNDPROC, lambda *args: wndProc(
                 self.oldWndProc, self._update_on_resize, *args))
 
+        self._load_resouces()
+
     def _build_2D_interface(self, width, height):
         self.animate_button = Gl2D_Text("ANIM",
                                         border=True,
@@ -86,6 +89,9 @@ class Scena:
         self.canvas2D = Gl2D_Canvas((width, height))
         self.canvas2D.addWidget(self.top_bar, self.bottom_bar)
         self.update_FPS()
+
+    def _load_resouces(self):
+        self.buffers = carica_triangolo()
 
     def setup(self, width, height):
         glMatrixMode(GL_PROJECTION)
@@ -131,7 +137,13 @@ class Scena:
             self.animation_angle += (360 / 5 / self.frame_rate)
 
         glPushMatrix()
-        triangolo()
+        glTranslatef(-1, 0, 0)
+        triangolo(self.buffers)
+        glPopMatrix()
+
+        glPushMatrix()
+        glTranslatef(1, 0, 0)
+        triangolo(self.buffers)
         glPopMatrix()
 
         if self.interface_2D:
@@ -202,15 +214,45 @@ class Scena:
             glDisable(GL_CULL_FACE)
 
 
-def triangolo():
-    glBegin(GL_TRIANGLES)
-    glColor3f(1, 0, 0)
-    glVertex3f(-1, -1, 0)
-    glColor3f(0, 0, 1)
-    glVertex3f(1, -1, 0)
-    glColor3f(0, 1, 0)
-    glVertex3f(0, 1, 0)
-    glEnd()
+def carica_triangolo():
+    # Preparo i dati del triangolo
+    vertici = numpy.array([-1, -1, 0, 1, -1, 0, 0, 1, 0], dtype='float32')
+    colori = numpy.array([1, 0, 0, 0, 0, 1, 0, 1, 0], dtype='float32')
+
+    # Ci facciamo dare un'area sulla memoria della GPU
+    # per fare ciò creiamo un Vertex Array Object (VAO)
+    vertex_bufferId = glGenBuffers(1)
+    # Informiamo la pipeline che vogliamo operare sulla sua memoria
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_bufferId)
+    # Copiamo i dati in memoria
+    glBufferData(GL_ARRAY_BUFFER, 4 * len(vertici), vertici, GL_STATIC_DRAW)
+
+    # Ripetiamo tutto per i dati sui colori
+    color_bufferId = glGenBuffers(1)
+    glBindBuffer(GL_ARRAY_BUFFER, color_bufferId)
+    glBufferData(GL_ARRAY_BUFFER, 4 * len(colori), colori, GL_STATIC_DRAW)
+
+    # Sganciamo dalla pipeline i buffer
+    glBindBuffer(GL_ARRAY_BUFFER, 0)
+
+    return vertex_bufferId, color_bufferId
+
+
+def triangolo(buffers):
+    # Agganciamo il buffer dei vertici
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[0])
+    glVertexPointer(3, GL_FLOAT, 0, None)
+    glEnableClientState(GL_VERTEX_ARRAY)
+
+    # Agganciamo il buffer dei colori
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[1])
+    glColorPointer(3, GL_FLOAT, 0, None)
+    glEnableClientState(GL_COLOR_ARRAY)
+
+    glDrawArrays(GL_TRIANGLES, 0, 3)
+
+    glDisableClientState(GL_VERTEX_ARRAY)
+    glDisableClientState(GL_COLOR_ARRAY)
 
 
 def main():
