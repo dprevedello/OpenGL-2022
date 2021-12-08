@@ -37,6 +37,8 @@ class Scena:
         self.destroyed = False
         # Backface culling
         self.culling = True
+        # Wireframe
+        self.wireframe = False
 
         self.window_id = GetForegroundWindow()
         self.decorations = [
@@ -74,11 +76,19 @@ class Scena:
                                        bgColor="#3D97B2",
                                        overBgColor="#1DB5D2",
                                        clickColor="#0A80A4")
+        self.wireframe_button = Gl2D_Text("WIRE",
+                                          border=True,
+                                          radius=5,
+                                          bg=True,
+                                          bgColor="#8046A4",
+                                          overBgColor="#9842D7",
+                                          clickColor="#841CC3")
         self.bottom_bar = FoldableBar(
             {
                 'animate': self.animate_button,
                 'fullscreen': self.fullscreen_button,
-                'culling': self.culing_button
+                'culling': self.culing_button,
+                'wireframe': self.wireframe_button
             },
             position="bottom")
         self.bottom_bar.content['fold'].setText('◄')
@@ -196,6 +206,8 @@ class Scena:
                     self.toggle_fullscreen()
                 elif element == 'culling':
                     self.toggle_culling()
+                elif element == 'wireframe':
+                    self.toggle_wireframe()
             if element == 'fold':
                 self.bottom_bar.folded = not self.bottom_bar.folded
                 if self.bottom_bar.folded:
@@ -212,6 +224,14 @@ class Scena:
             glEnable(GL_CULL_FACE)
         else:
             glDisable(GL_CULL_FACE)
+
+    def toggle_wireframe(self):
+        self.wireframe = not self.wireframe
+        glLineWidth(2.0)
+        if self.wireframe:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+        else:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
 
 def carica_triangolo():
@@ -320,6 +340,10 @@ def main():
             # Backface culling
             if event.type == pygame.KEYUP and event.unicode == 'c':
                 scena.toggle_culling()
+
+            # Wireframe
+            if event.type == pygame.KEYUP and event.unicode == 'w':
+                scena.toggle_wireframe()
         scena.draw()
     pygame.quit()
     sys.exit()
