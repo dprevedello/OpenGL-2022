@@ -163,6 +163,11 @@ class Scena:
 
         glPushMatrix()
         cubo(self.buffers)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+        glLineWidth(3.0)
+        cubo(self.buffers, [1, 1, 1])
+        if not self.wireframe:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
         glPopMatrix()
 
         if self.interface_2D:
@@ -287,16 +292,19 @@ def carica_cubo():
     return {'v': vertex_bufferId, 'c': color_bufferId, 'type': GL_QUADS, 'len': len(superfici)}
 
 
-def cubo(buffers):
+def cubo(buffers, colore=None):
     # Agganciamo il buffer dei vertici
     glBindBuffer(GL_ARRAY_BUFFER, buffers['v'])
     glVertexPointer(3, GL_FLOAT, 0, None)
     glEnableClientState(GL_VERTEX_ARRAY)
 
-    # Agganciamo il buffer dei colori
-    glBindBuffer(GL_ARRAY_BUFFER, buffers['c'])
-    glColorPointer(3, GL_FLOAT, 0, None)
-    glEnableClientState(GL_COLOR_ARRAY)
+    if colore is None:
+        # Agganciamo il buffer dei colori
+        glBindBuffer(GL_ARRAY_BUFFER, buffers['c'])
+        glColorPointer(3, GL_FLOAT, 0, None)
+        glEnableClientState(GL_COLOR_ARRAY)
+    else:
+        glColor3fv(colore)
 
     glDrawArrays(buffers['type'], 0, buffers['len'])
 
