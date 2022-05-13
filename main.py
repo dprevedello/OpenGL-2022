@@ -111,7 +111,7 @@ class Scena:
         self.update_FPS()
 
     def _load_resouces(self):
-        self.buffers = carica_triangolo()
+        self.buffers = carica_cubo()
 
     def setup(self, width, height):
         glMatrixMode(GL_PROJECTION)
@@ -162,13 +162,7 @@ class Scena:
             self.animation_angle += (360 / 5 / self.frame_rate)
 
         glPushMatrix()
-        glTranslatef(-1, 0, 0)
-        triangolo(self.buffers)
-        glPopMatrix()
-
-        glPushMatrix()
-        glTranslatef(1, 0, 0)
-        triangolo(self.buffers)
+        cubo(self.buffers)
         glPopMatrix()
 
         if self.interface_2D:
@@ -258,10 +252,21 @@ class Scena:
             glDisable(GL_DEPTH_TEST)
 
 
-def carica_triangolo():
-    # Preparo i dati del triangolo
-    vertici = numpy.array([-1, -1, 0, 1, -1, 0, 0, 1, 0], dtype='float32')
-    colori = numpy.array([1, 0, 0, 0, 0, 1, 0, 1, 0], dtype='float32')
+def carica_cubo():
+    # Preparo i dati del cubo
+    # Elenco gli 8 vertici di un cubo
+    vertici = numpy.array([[1, -1, -1], [1,  1, -1], [-1,  1, -1], [-1, -1, -1],
+                           [1, -1,  1], [1,  1,  1], [-1, -1,  1], [-1,  1,  1]], dtype='float32')
+    # Colori associati ai vertici
+    colori = numpy.array([[0, 1, 0], [0, 0, 1], [1, 0, 0], [1, 1, 1]], dtype='float32')
+    # Definisco le 6 superfici indicando i 4 vertici come indice della precedente lista
+    superfici = numpy.array([[3, 2, 1, 0], [6, 7, 2, 3], [4, 5, 7, 6],
+                            [0, 1, 5, 4], [2, 7, 5, 1], [6, 3, 0, 4]]).reshape(-1)
+
+    # Ricostruisco l'elenco dei vertici a partire dalle superfici
+    vertici = vertici[superfici].reshape(-1)
+    # Estendo la lista dei colori per coprire tutti i nuovi vertici
+    colori = numpy.tile(colori, (6, 1)).reshape(-1)
 
     # Ci facciamo dare un'area sulla memoria della GPU
     # per fare ciò creiamo un Vertex Array Object (VAO)
@@ -279,21 +284,21 @@ def carica_triangolo():
     # Sganciamo dalla pipeline i buffer
     glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-    return vertex_bufferId, color_bufferId
+    return {'v': vertex_bufferId, 'c': color_bufferId, 'type': GL_QUADS, 'len': len(superfici)}
 
 
-def triangolo(buffers):
+def cubo(buffers):
     # Agganciamo il buffer dei vertici
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[0])
+    glBindBuffer(GL_ARRAY_BUFFER, buffers['v'])
     glVertexPointer(3, GL_FLOAT, 0, None)
     glEnableClientState(GL_VERTEX_ARRAY)
 
     # Agganciamo il buffer dei colori
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[1])
+    glBindBuffer(GL_ARRAY_BUFFER, buffers['c'])
     glColorPointer(3, GL_FLOAT, 0, None)
     glEnableClientState(GL_COLOR_ARRAY)
 
-    glDrawArrays(GL_TRIANGLES, 0, 3)
+    glDrawArrays(buffers['type'], 0, buffers['len'])
 
     glDisableClientState(GL_VERTEX_ARRAY)
     glDisableClientState(GL_COLOR_ARRAY)
