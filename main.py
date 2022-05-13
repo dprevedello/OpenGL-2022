@@ -39,6 +39,8 @@ class Scena:
         self.culling = True
         # Wireframe
         self.wireframe = False
+        # Depth-test
+        self.depth_test = True
 
         self.window_id = GetForegroundWindow()
         self.decorations = [
@@ -83,12 +85,20 @@ class Scena:
                                           bgColor="#8046A4",
                                           overBgColor="#9842D7",
                                           clickColor="#841CC3")
+        self.depth_test_button = Gl2D_Text("DEPTH",
+                                           border=True,
+                                           radius=5,
+                                           bg=True,
+                                           bgColor="#D2691E",
+                                           overBgColor="#e47c34",
+                                           clickColor="#841CC3")
         self.bottom_bar = FoldableBar(
             {
                 'animate': self.animate_button,
                 'fullscreen': self.fullscreen_button,
                 'culling': self.culing_button,
-                'wireframe': self.wireframe_button
+                'wireframe': self.wireframe_button,
+                'depth-test': self.depth_test_button
             },
             position="bottom")
         self.bottom_bar.content['fold'].setText('◄')
@@ -114,6 +124,11 @@ class Scena:
         else:
             glDisable(GL_CULL_FACE)
 
+        if self.depth_test:
+            glEnable(GL_DEPTH_TEST)
+        else:
+            glDisable(GL_DEPTH_TEST)
+
     def _update_on_resize(self, *args):
         if not self.destroyed:
             width, height = [
@@ -128,9 +143,9 @@ class Scena:
         # Aggiornamento FPS
         self.fps[0] += 1
 
-        # Cancello il canvas
+        # Cancello il canvas compreso il depth buffer
         glClearColor(0, 0, 0, 1)
-        glClear(GL_COLOR_BUFFER_BIT)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         # Imposto la telecamera
         glMatrixMode(GL_MODELVIEW)
@@ -208,6 +223,8 @@ class Scena:
                     self.toggle_culling()
                 elif element == 'wireframe':
                     self.toggle_wireframe()
+                elif element == 'depth-test':
+                    self.toggle_depth_test()
             if element == 'fold':
                 self.bottom_bar.folded = not self.bottom_bar.folded
                 if self.bottom_bar.folded:
@@ -232,6 +249,13 @@ class Scena:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
         else:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+
+    def toggle_depth_test(self):
+        self.depth_test = not self.depth_test
+        if self.depth_test:
+            glEnable(GL_DEPTH_TEST)
+        else:
+            glDisable(GL_DEPTH_TEST)
 
 
 def carica_triangolo():
@@ -344,6 +368,10 @@ def main():
             # Wireframe
             if event.type == pygame.KEYUP and event.unicode == 'w':
                 scena.toggle_wireframe()
+
+            # Depth-test
+            if event.type == pygame.KEYUP and event.unicode == 'd':
+                scena.toggle_depth_test()
         scena.draw()
     pygame.quit()
     sys.exit()
