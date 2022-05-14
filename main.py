@@ -113,7 +113,7 @@ class Scena:
         self.update_FPS()
 
     def _load_resouces(self):
-        self.mesh = Mesh('./mesh/box-C3F_V3F.obj')
+        self.mesh = Mesh('./mesh/earth.obj', './mesh/earthmap.2k.jpg')
 
     def setup(self, width, height):
         # Imposto la matrice di proiezione
@@ -150,7 +150,7 @@ class Scena:
 
         # Imposto la telecamera (matrice di vista)
         self.m_vista = glm.mat4(1.0)
-        self.m_vista = glm.translate(self.m_vista, glm.vec3(0, 0, -5 + self.zoom))
+        self.m_vista = glm.translate(self.m_vista, glm.vec3(0, 0, -2 + self.zoom))
         self.m_vista = glm.rotate(self.m_vista, glm.radians(-self.rotx), glm.vec3(1, 0, 0))
         self.m_vista = glm.rotate(self.m_vista, glm.radians(-self.roty), glm.vec3(0, 1, 0))
 
