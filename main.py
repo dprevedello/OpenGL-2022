@@ -8,6 +8,7 @@ from mesh import Mesh
 
 import sys
 import numpy
+import glm
 
 
 class Scena:
@@ -115,9 +116,8 @@ class Scena:
         self.mesh = Mesh('./mesh/box-C3F_V3F.obj')
 
     def setup(self, width, height):
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        gluPerspective(45, width / height, 0.1, 50.0)
+        # Imposto la matrice di proiezione
+        self.m_proiezione = glm.perspective(glm.radians(45), float(width)/height, 0.1, 50.0)
 
         glCullFace(GL_BACK)
         if self.culling:
@@ -148,22 +148,21 @@ class Scena:
         glClearColor(0, 0, 0, 1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        # Imposto la telecamera
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        glTranslatef(0, 0, -5 + self.zoom)
-        glRotatef(-self.rotx, 1, 0, 0)
-        glRotatef(-self.roty, 0, 1, 0)
+        # Imposto la telecamera (matrice di vista)
+        self.m_vista = glm.mat4(1.0)
+        self.m_vista = glm.translate(self.m_vista, glm.vec3(0, 0, -5 + self.zoom))
+        self.m_vista = glm.rotate(self.m_vista, glm.radians(-self.rotx), glm.vec3(1, 0, 0))
+        self.m_vista = glm.rotate(self.m_vista, glm.radians(-self.roty), glm.vec3(0, 1, 0))
 
     def draw(self):
         self._pre_draw()
 
-        glRotatef(self.animation_angle, 0, 1, 0)
+        m_modello = glm.rotate(glm.mat4(1.0), glm.radians(self.animation_angle), glm.vec3(0, 1, 0))
         if self.animate:
             self.animation_angle += (360 / 5 / self.frame_rate)
 
         glPushMatrix()
-        self.mesh.draw()
+        self.mesh.draw(m_modello, self.m_vista, self.m_proiezione)
         glPopMatrix()
 
         if self.interface_2D:
